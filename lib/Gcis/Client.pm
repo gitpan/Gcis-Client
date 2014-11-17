@@ -9,7 +9,7 @@ use Data::Dumper;
 use Time::HiRes qw/sleep/;
 use v5.14;
 
-our $VERSION = 0.08;
+our $VERSION = 0.09;
 
 has url      => 'http://localhost:3000';
 has 'key';
@@ -106,7 +106,9 @@ sub put_file {
     my $tx = $s->ua->put($s->url."$path" => $data );
     $s->tx($tx);
     my $res = $tx->success or do {
-        $s->logger->error("$path : ".$tx->error.$tx->res->body);
+        $s->error(join "\n",$tx->error->{message},$tx->res->body);
+        $s->logger->error($path." : ".$tx->error->{message});
+        $s->logger->error($tx->res->body);
         return;
     };
     return unless $res;
@@ -385,6 +387,15 @@ Add a file using its URL.
         file_url => $file_url,
         landing_page => $landing_page
     });
+
+=head2 put_file
+
+PUT a local file to a remote destination.
+
+    $g->put_file($destination, $source) or die $g->error;
+
+    $path is the destination API path, like /report/files/nca2100/highres.pdf
+    $source is the local file, e.g. /tmp/nca2100.pdf
 
 =head1 CONFIGRATION
 
